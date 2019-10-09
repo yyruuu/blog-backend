@@ -29,6 +29,55 @@ router.get('/login', async ctx => {
   }
 })
 
+router.get('/signout', async ctx => {
+  ctx.session = null;
+  ctx.body = {
+    err: 0,
+    info: '注销成功'
+  }
+})
+
+
+router.put('/:id', async ctx => {
+  let { id } = ctx.params;
+  let user = await User.findOne({ where: { id } });
+  if (user) {
+    let { username, email } = ctx.request.body;
+    user.username = username;
+    user.email = email;
+    user.save();
+    ctx.body = {
+      err: 0,
+      info: null,
+      data: user
+    }
+  } else {
+    ctx.body = {
+      err: 1,
+      info: 'user is not exists'
+    }
+  }
+})
+
+router.get('/:id', async ctx => {
+  let { id } = ctx.params;
+  let user = await User.findOne({ where: { id } });
+  user = JSON.parse(JSON.stringify(user));
+    delete user.password;
+  if (user) {
+    ctx.body = {
+      err: 0,
+      info: null,
+      data: user
+    }
+  } else {
+    ctx.body = {
+      err: 1,
+      info: "user is not exists"
+    }
+  }
+})
+
 router.post('/login', async ctx => {
   let { username, password } = ctx.request.body;
   let user = await User.findOne({ where: { username } });
@@ -68,12 +117,36 @@ router.post('/register', async ctx => {
   }
 })
 
-router.get('/signout', async ctx => {
-  ctx.session = null;
-  ctx.body = {
-    err: 0,
-    info: '注销成功'
+
+router.delete('/:id', async ctx => {
+  let { id } = ctx.params;
+  let user = await User.findOne({ where: { id } });
+  if(user){
+    await user.destroy();
+    ctx.body = {
+      err: 0,
+      info: null,
+      data: user
+    }
+  }else{
+    ctx.body = {
+      err: 1,
+      info: "删除失败"
+    }
   }
 })
 
+router.get('/', async ctx => {
+  let users = await User.findAll();
+  users = users.map(i => {
+    i = JSON.parse(JSON.stringify(i));
+    delete i.password;
+    return i;
+  })
+  ctx.body = {
+    err: 0,
+    info: null,
+    data: users
+  }
+})
 module.exports = router

@@ -10,26 +10,27 @@ const Op = Sequelize.Op;
 router.prefix('/article');
 
 //const clean = DOMPurify.sanitize(dirty);
-
 router.get('/', async ctx => {
   let { sort = [], offset = 0, pageSize = 10, filter = {} } = ctx.request.query;
   if (typeof sort == 'string') {
     sort = JSON.parse(sort);
   }
   if (typeof filter == 'string') {
+    console.log("json?");
     filter = JSON.parse(filter);
-  }
+  } 
+  console.log("filter", filter)
   const res = await Article.findAll({
     include: [{ model: Tag }, { model: User, attributes: ['username'] }],
     order: sort.length == 0 ? null : [sort],
     offset: +offset,
     limit: +pageSize,
-    where: (filter == null) ? {
+    where: (filter) ? {
       createdAt: {
         [Op.gte]: filter.startDate,
         [Op.lt]: filter.endDate
       }
-    } : {},
+    } : null,
   });
   //直接获得Article表里有多少条数据
   let total = await Article.count();
@@ -51,22 +52,8 @@ router.get('/', async ctx => {
   }
 })
 
-router.post('/', async ctx => {
-  //解构语句赋值
-  let { title, target, content } = ctx.request.body;
-  let userId = ctx.session.userId;
-  console.log("cookie", ctx.session);
-  console.log("userId", userId);
-  let article = await Article.create({ title, target, content, userId });
-  ctx.body = {
-    err: 0,
-    info: null,
-    data: article
-  }
-})
-
 router.put('/:id', async ctx => {
-  let article = await Article.findOne({ where: { id: ctx.params.id, include: [{ model: User, attributes: ['username'] }] } });
+  let article = await Article.findOne({ where: { id: ctx.params.id } });
   if (article) {
     let { title, target, content } = ctx.request.body;
     article.title = title;
@@ -86,6 +73,21 @@ router.put('/:id', async ctx => {
     }
   }
 })
+
+router.post('/', async ctx => {
+  //解构语句赋值
+  let { title, target, content } = ctx.request.body;
+  let userId = ctx.session.userId;
+  console.log("cookie", ctx.session);
+  console.log("userId", userId);
+  let article = await Article.create({ title, target, content, userId });
+  ctx.body = {
+    err: 0,
+    info: null,
+    data: article
+  }
+})
+
 
 router.get('/:id', async ctx => {
   let article = await Article.findOne({ where: { id: ctx.params.id }, include: [{ model: Tag }, { model: User, attributes: ['username'] }] });
