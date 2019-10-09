@@ -53,7 +53,7 @@ router.put('/:id', async ctx => {
 
 router.get('/article/:id', async ctx => {
   let { id } = ctx.params;
-  let tag = await Tag.findOne({ where: { id } });
+  let tag = await Tag.findOne({ where: { id }});
   if (!tag) {
     ctx.body = {
       err: 1,
